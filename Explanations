@@ -1,0 +1,181 @@
+# End-to-End Capstone Project Report: Developer Technology Trends & Demographics Analysis
+
+## Executive Summary
+
+This report documents the end-to-end data analytics lifecycle conducted for a technology consulting organization evaluating developer preferences, tool ecosystems, compensation benchmarks, and workforce demographics. Using the Stack Overflow Developer Survey alongside labor market datasets, the objective is to extract actionable intelligence to guide enterprise software stack adoption, talent acquisition, and workforce upskilling initiatives.
+
+The analytical workflow spans five core phases: automated data extraction (APIs and web scraping), data wrangling and anomaly mitigation, statistical exploratory data analysis (EDA), database-driven visual analysis via SQL, and interactive executive dashboard development in [Google Looker Studio](https://www.coursera.org/learn/ibm-data-analyst-capstone-project/ungradedWidget/8P7Ci/lab-26-option-b-building-a-dashboard-with-google-looker-studio).
+
+---
+
+## 1. Data Collection & Extraction Pipeline
+
+The project ingested data from disparate sources using automated extraction pipelines to compile a foundation of technology usage, compensation metrics, and job posting counts.
+
+* **API Extraction (Job Postings Pipeline):**
+* Automated `GET` requests were executed against remote REST API endpoints using the Python `requests` library.
+* Retrieved JSON payloads were parsed into native Python dictionaries using `.json()`.
+* Technology and location filters were applied to measure market demand (e.g., job volume for Python across metropolitan markets like Los Angeles).
+* Extracted metrics were compiled into tabular structures and exported to `job-postings.xlsx`.
+
+
+* **Web Scraping Core Competencies (Lab 3):**
+* Evaluated HTML document object models using Python's `requests` and `BeautifulSoup` on [IBM](http://www.ibm.com/).
+* Implemented DOM parsing scripts to extract anchor hyperlinks (``), media assets (`
+
+
+
+`), and tabular structures (`
+
+`).
+
+* **Targeted Web Scraping for Compensation Benchmarks (Lab 4):**
+* Scraped tabular salary data from an external HTML source hosting programming language compensation benchmarks.
+* Extracted programming language identifiers alongside average annual compensation figures.
+* Formatted and persisted the cleaned dataset to `popular-languages.csv` for downstream compensation comparisons.
+
+
+
+---
+
+## 2. Data Cleaning & Wrangling Pipeline
+
+Raw survey data contains structural noise, redundant entries, missing observations, and unstandardized schemas. Labs 5 through 11 established a systematic cleaning protocol to guarantee analytical validity.
+
+### Data Profiling & Structural Inspection (Lab 5)
+
+* Loaded the base survey dataset into pandas DataFrame structures (`M1ExploreDataSet-lab_V2.ipynb`).
+* Audited column data types, verifying distinctions between continuous numerical measurements (`int64`, `float64`) and discrete categorical fields (`object`).
+* Established baseline row and column dimensions.
+
+### Deduplication Strategy (Labs 6 & 7)
+
+* **Identification:** Queried identical records across primary respondent identifiers and multi-feature composite keys using `.duplicated()`.
+* **Distribution & Impact Analysis:** Assessed the skewness introduced by repeated rows. Retaining duplicate respondent submissions disproportionately weights specific tool usages and biases salary metrics upward or downward.
+* **Execution:** Removed duplicate records using `.drop_duplicates(inplace=True)` and verified that duplicate sums dropped to zero, stabilizing sample authenticity.
+
+### Missing Value Imputation (Labs 8 & 9)
+
+* **Missingness Auditing:** Identified and quantified missing values using `.isna().sum()`.
+* **Categorical Imputation:** Categorical attributes exhibiting null values (such as `WorkLoc`) were evaluated for modal frequency using `.value_counts()`. The majority category (e.g., `"Office"`) was imputed across missing records using `.fillna()`.
+* **Validation:** Verified that target categorical columns reached zero null instances prior to dimensional modeling.
+
+### Relational Normalization & Master Data Wrangling (Labs 10 & 11)
+
+* **Schema Normalization (Lab 10):** Restructured data dependencies to minimize redundancy, aligning with relational database structures (RDBMS) suitable for SQL querying.
+* **Taxonomy Standardization (Lab 11):** Cleaned unstructured text entries in regional columns (`Country`) and academic credentials (`EdLevel`) to eliminate duplicate representations of single entities.
+* **Categorical Encoding (Lab 11):** Applied one-hot encoding to multi-category variables (such as `Employment`) to generate binary indicators suitable for quantitative evaluation.
+* **Numeric Imputation (Lab 11):** Replaced null values in continuous target metrics (such as `ConvertedCompYearly`) using central tendency estimators (mean and median) conditioned on job role groupings.
+
+---
+
+## 3. Statistical Exploratory Data Analysis (EDA)
+
+Exploratory analysis (Labs 12–15) characterized the statistical topology of the cleaned dataset, surfaced developer trends, isolated anomalies, and identified mathematical correlations.
+
+### Baseline Summary Statistics & Trend Identification (Lab 12)
+
+* Evaluated dataset summary metrics using `.describe()`.
+* Analyzed macro workforce trends across employment types, remote versus on-site work arrangements, and job satisfaction ratings.
+* Established initial distributions of programming language adoption.
+
+### Distribution Profiling & Outlier Mitigation (Labs 13 & 14)
+
+* **Distribution Shape (Lab 13):** Profiled the distribution of continuous features (`ConvertedComp`, `Age`). The raw compensation distribution exhibited extreme positive skewness, indicating a long tail of hyper-earners distorting the arithmetic mean.
+* **Outlier Detection via IQR (Lab 14):** Constructed box plots to isolate data points beyond standard statistical boundaries. Implemented Interquartile Range calculations:
+
+$$IQR = Q3 - Q1$$
+
+$$\text{Lower Threshold} = Q1 - 1.5 \times IQR$$
+
+$$\text{Upper Threshold} = Q3 + 1.5 \times IQR$$
+
+* **Trimming:** Removed records falling outside the upper and lower thresholds. Post-trimming, the median compensation stabilized, providing an accurate, robust representation of developer market compensation.
+
+### Correlation Analysis (Lab 15)
+
+* Evaluated Pearson correlation coefficients between continuous features (e.g., `Age`, `WorkExp`, `ConvertedComp`).
+* Generated bivariate scatter plots and multi-variable correlation heatmaps to assess feature interactions:
+* Established a positive correlation between professional experience and compensation.
+* Verified that developer compensation plateaus past mid-career brackets.
+
+
+
+---
+
+## 4. SQL-Driven Data Visualization
+
+In Labs 16 through 24, the normalized survey dataset was stored within an SQLite Relational Database Management System (RDBMS). Data extraction was performed using SQL `SELECT` queries inside Jupyter Notebooks and rendered using `matplotlib` and `seaborn`.
+
+| Chart Type | Lab | Analytical Objective | Key Technical Implementation |
+| --- | --- | --- | --- |
+| **Broad Visual Profiling** | Lab 16 | Foundational charting across distributions, compositions, and relationships. | SQL extraction via `sqlite3` and `pandas.read_sql_query()`. |
+| **Histogram** | Lab 17 | Frequency distribution of continuous compensation. | Binned distribution visual of `ConvertedComp` post-outlier mitigation. |
+| **Box Plot** | Lab 18 | Spread, interquartile ranges, and median metrics. | Five-number summary visualization comparing age categories and compensation tiers. |
+| **Scatter Plot** | Lab 19 | Direct bivariate relationships and trend clustering. | Mapped `Age` versus `ConvertedComp` to visualize career compensation progression. |
+| **Bubble Plot** | Lab 20 | Multi-variable continuous relationships. | Mapped `WorkExp` vs. `ConvertedComp` with marker size scaled to respondent `Age`. |
+| **Pie Chart** | Lab 21 | Discrete categorical share and market proportions. | Proportional breakdown of database usage and developer operating systems. |
+| **Stacked Chart** | Lab 22 | Multi-category composition comparisons across cohorts. | Sub-group proportions comparing developer roles across geographic regions. |
+| **Line Chart** | Lab 23 | Continuous progression across an ordered variable. | Tracked median compensation and job satisfaction trends across age brackets (25–30, 45–60). |
+| **Bar Chart** | Lab 24 | Categorical frequency comparisons and rankings. | Ranked distributions comparing developer tools, web frameworks, and education levels. |
+
+---
+
+## 5. Executive Dashboard Architecture (Google Looker Studio)
+
+Using the cleaned dataset (`survey_results_updated.csv`), three production dashboards were developed in Google Looker Studio (Lab 26). Each dashboard employs a structured 2x2 grid layout with active filters applied to exclude null values.
+
+```
++-------------------------------------------------------------------+
+|               GOOGLE LOOKER STUDIO DASHBOARD SUITE                |
++---------------------------------+---------------------------------+
+| DASHBOARD 1: CURRENT TECH       | DASHBOARD 2: FUTURE TRENDS      |
+| [Panel 1] Top 10 Languages      | [Panel 1] Top 10 Desired Lang   |
+|           (Stacked Bar)         |           (Stacked Bar)         |
+| [Panel 2] Top 10 Databases      | [Panel 2] Top 10 Desired DBs    |
+|           (Stacked Column)      |           (Stacked Column)      |
+| [Panel 3] Top 10 Platforms      | [Panel 3] Top 10 Platforms      |
+|           (Word Cloud)          |           (Tree Map)            |
+| [Panel 4] Top 10 Web Frameworks | [Panel 4] Top 10 Frameworks     |
+|           (Scatter Bubble)      |           (Scatter Bubble)      |
++---------------------------------+---------------------------------+
+| DASHBOARD 3: DEMOGRAPHICS       | DELIVERABLE                     |
+| [Panel 1] Age Groups (Pie)      | Final Executive Presentation    |
+| [Panel 2] Country Count (Map)   | - Integrated Dashboard Captures |
+| [Panel 3] Education (Line Bar)  | - Strategic Tech Recommendations|
+| [Panel 4] Age x Education       | - Hiring & Upskilling Roadmaps  |
+|           (Stacked Bar)         |                                 |
++---------------------------------+---------------------------------+
+
+```
+
+### Dashboard 1: Current Technology Usage
+
+* **Panel 1 (Stacked Bar Chart):** Top 10 Languages Used, categorizing the most prevalent programming languages currently utilized by respondents.
+* **Panel 2 (Stacked Column Chart):** Top 10 Databases Used, highlighting the dominance of relational (e.g., PostgreSQL, MySQL) versus non-relational database management systems.
+* **Panel 3 (Word Cloud):** Top 10 Platforms Used, rendered via Vega/Vega-Lite Community Visualizations to weight cloud providers (AWS, Azure, GCP) and virtualization environments by volume.
+* **Panel 4 (Scatter Bubble Chart):** Top 10 Web Frameworks Used, charting framework adoption, frequency, and relative developer footprint.
+
+### Dashboard 2: Future Technology Trends
+
+* **Panel 1 (Stacked Bar Chart):** Top 10 Languages Desired Next Year, measuring developer appetite for modern languages (e.g., Python, Rust, Go, TypeScript).
+* **Panel 2 (Stacked Column Chart):** Top 10 Databases Desired Next Year, tracking shifts toward cloud-native databases, distributed caching, and vector stores.
+* **Panel 3 (Tree Map):** Top 10 Desired Platforms, providing a hierarchical visual breakdown of developer migration toward hyperscaler cloud ecosystems.
+* **Panel 4 (Scatter Bubble Chart):** Top 10 Desired Web Frameworks, mapping emerging frontend and full-stack runtime interest (e.g., Next.js, React).
+
+### Dashboard 3: Demographics & Workforce Profile
+
+* **Panel 1 (Pie Chart):** Respondents by Age, displaying the proportional distribution of junior, mid-level, and senior developer demographics.
+* **Panel 2 (Choropleth Map Chart):** Respondent Count by Country, mapping the global distribution of talent density across North America, Europe, and Asia-Pacific.
+* **Panel 3 (Line Bar Chart):** Respondent Distribution by Education Level, evaluating the prevalence of undergraduate, postgraduate, and self-directed academic credentials.
+* **Panel 4 (Stacked Bar Chart):** Respondent Count by Age Classified by Education Level, illustrating how educational background correlates across different age brackets.
+
+---
+
+## 6. Strategic Insights & Synthesis for Presentation
+
+Consolidating the findings across all 26 labs yields the following strategic insights for the consulting firm's executive presentation:
+
+* **Technology Migration Trajectory:** Comparing Dashboard 1 with Dashboard 2 highlights a clear transition away from legacy on-premises platforms toward cloud-native hosting and typed, memory-safe languages (TypeScript, Rust, Python). Enterprise tooling recommendations should prioritize these stacks.
+* **Compensation vs. Experience Reality:** Outlier analysis demonstrated that while top-tier salaries skew public perception, median developer compensation follows a steady, predictable progression that plateaus around 15–20 years of experience. Compensation bandings must be benchmarked to median interquartile thresholds rather than raw mathematical averages.
+* **Global Workforce Distribution:** Demographics analysis confirms that while North America and Western Europe hold the highest compensation rates, global developer talent is widely distributed across emerging tech hubs, reinforcing the business value of structured remote and hybrid work architectures.
